@@ -1,0 +1,64 @@
+{
+  "entities": {
+    "ReflectionNote": {
+      "title": "ReflectionNote",
+      "description": "A daily lesson reflection note recorded by a teacher",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the teacher"
+        },
+        "userEmail": {
+          "type": "string",
+          "description": "Email of the teacher"
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the lesson (YYYY-MM-DD)"
+        },
+        "subject": {
+          "type": "string",
+          "description": "Subject taught"
+        },
+        "wellDone": {
+          "type": "string",
+          "description": "What went well today"
+        },
+        "improvement": {
+          "type": "string",
+          "description": "Areas for improvement / what was regrettable"
+        },
+        "studentReaction": {
+          "type": "string",
+          "description": "Student reaction / feedback"
+        },
+        "aiActionSuggestion": {
+          "type": "string",
+          "description": "AI-proposed one-sentence small action for tomorrow"
+        },
+        "aiFeedback": {
+          "type": "string",
+          "description": "Optional AI warm feedback"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp"
+        }
+      },
+      "required": ["userId", "date", "subject", "wellDone", "improvement", "studentReaction", "aiActionSuggestion"]
+    }
+  },
+  "firestore": {
+    "/reflections/{reflectionId}": {
+      "schema": "ReflectionNote",
+      "description": "Collection of teacher reflection notes"
+    }
+  }
+}

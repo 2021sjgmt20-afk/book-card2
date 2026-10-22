@@ -1,0 +1,57 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidReflection(data) {
+      return data.keys().hasAll(['userId', 'date', 'subject', 'wellDone', 'improvement', 'studentReaction', 'aiActionSuggestion']) &&
+        data.keys().hasOnly(['userId', 'userEmail', 'date', 'subject', 'wellDone', 'improvement', 'studentReaction', 'aiActionSuggestion', 'aiFeedback', 'createdAt', 'updatedAt']) &&
+        data.userId is string && data.userId == request.auth.uid &&
+        data.date is string && data.date.size() >= 8 && data.date.size() <= 20 &&
+        data.subject is string && data.subject.size() > 0 && data.subject.size() <= 100 &&
+        data.wellDone is string && data.wellDone.size() <= 5000 &&
+        data.improvement is string && data.improvement.size() <= 5000 &&
+        data.studentReaction is string && data.studentReaction.size() <= 5000 &&
+        data.aiActionSuggestion is string && data.aiActionSuggestion.size() <= 1000 &&
+        (!('userEmail' in data) || (data.userEmail is string && data.userEmail.size() <= 200)) &&
+        (!('aiFeedback' in data) || (data.aiFeedback is string && data.aiFeedback.size() <= 2000)) &&
+        (!('createdAt' in data) || data.createdAt is timestamp || data.createdAt is string) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp || data.updatedAt is string);
+    }
+
+    match /reflections/{reflectionId} {
+      allow get: if isOwner(resource.data.userId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(reflectionId) && isValidReflection(incoming());
+      allow update: if isSignedIn() && isValidId(reflectionId) && isValidReflection(incoming()) &&
+        incoming().userId == existing().userId &&
+        existing().userId == request.auth.uid;
+      allow delete: if isOwner(resource.data.userId);
+    }
+  }
+}
